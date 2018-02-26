@@ -1,0 +1,85 @@
+% model of synapses :  NMDA Synapse
+% ------------------------------------------------------------
+%     Reference: Mccormick,1993
+%--------------------------------------------------------------
+%Author: Manjusha Nair M @Amrita University
+
+{simulation_time = 5000, start_time([nmda,2])} %for 100 ms simulation
+class nmda
+{
+   attributes
+     series real Gnmda;
+     series real Inmda;
+     series real SpikeTime;
+     series real TimeElapsed;
+       real Gmax;
+       real E;
+       real Vm;
+       real Enmda;
+       real Dt;
+       real Kmg;
+       real FbyRT;
+       real Mgc;
+      %real [5] Input;
+      real Input;
+
+   constraints
+      TimeElapsed = Time*Dt;
+      member(TimeElapsed, Input) -->  SpikeTime = Time*Dt;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+      Kmg = 0.00107* pow(E,(2*0.73*Vm*FbyRT));
+      TimeElapsed < Input<1> --> Gnmda = 0;
+      TimeElapsed >= Input<1> --> Gnmda= Gmax* (1-(1/(1+(Kmg/Mgc))))* pow(E,-(TimeElapsed-5)/71)* ((1- pow(E,-(TimeElapsed-5)/13.2)) / 0.60);
+      TimeElapsed <  Input<1> --> (Inmda = 0);
+      TimeElapsed >=  Input<1> --> (Inmda  = Gnmda*  (Vm- Enmda));
+
+
+     constructors nmda()
+  {
+   %Input=[20.0,30.0,40.0,50.0,60.0];
+   Input=[20.0];
+   Gmax = 50.0;
+   Enmda = 0.0;
+   FbyRT = 0.038921;    % mV at room temp. T = 25 degree celsius
+   Mgc = 1.5;
+   Vm = -65.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   Gnmda<1> = 0;
+   Inmda<1> =0;
+  }
+}
+
+
+class nmdasynapse
+{
+ attributes
+      nmda Nm;
+
+ constructors nmdasynapse()
+ {
+   Nm = new nmda();
+    %dump_to_file(['Time','Isyn','SpikeTime'],[Nm.TimeElapsed,Nm.Inmda,Nm.SpikeTime]);
+    dump_to_file(['Time','Gsyn'],[Nm.TimeElapsed,Nm.Gnmda]);
+
+    % plot_graph('Output',
+			   %Am.Iampa,2, 200,-500,0,1380,720,5,1);
+ }
+}
+$
+
+
+
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('nmdas.tcob').
+%[nmdas].
+%nmdasynapse(_,_).
+
+
+
+
+

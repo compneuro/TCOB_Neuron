@@ -1,0 +1,76 @@
+% model of synapses :  Single Exponential
+% ------------------------------------------------------------
+%     Gsyn = Gmax * Math.exp(-(t-t0)/tausyn)
+%      Isyn  = Gsyn *  (Vm- Esyn)
+%--------------------------------------------------------------
+%Author: Manjusha Nair M @Amrita University
+
+{simulation_time = 5000, start_time([singleexponential,2])}
+class singleexponential
+{
+   attributes
+     series real Gsyn;
+     series real Isyn;
+     series real SpikeTime;
+     series real TimeElapsed;
+       real Gmax;
+       real E;
+       real Tausyn;
+       real Vm;
+       real Esyn;
+       real Dt;
+    % real [5] Input;
+       real Input;
+
+   constraints
+      TimeElapsed = Time*Dt;
+      member( TimeElapsed, Input) -->  SpikeTime = Time*Dt;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+      TimeElapsed < Input<1> --> Gsyn = 0;
+      TimeElapsed >= Input<1> --> Gsyn= Gmax *  pow(E,-( (TimeElapsed - SpikeTime) / Tausyn));
+      TimeElapsed <  Input<1> --> (Isyn = 0);
+      TimeElapsed >=  Input<1> --> (Isyn  = Gsyn *  (Vm- Esyn));
+
+
+     constructors singleexponential()
+  {
+   %Input=[20.0,30.0,40.0,50.0,60.0];
+    Input = [20.0];
+   Gmax = 3.0;
+   Esyn=15.0;
+   Tausyn=12.0;
+   Vm = -70.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   Gsyn<1> = 0;
+   Isyn<1> =0;
+  }
+}
+class sesynapse
+{
+ attributes
+      singleexponential Se;
+ constructors sesynapse()
+ {
+   Se = new singleexponential();
+    %dump_to_file(['Time','Isyn','SpikeTime'],[Se.TimeElapsed,Se.Isyn,Se.SpikeTime]);
+    dump_to_file(['Time','Gsyn'],[Se.TimeElapsed,Se.Gsyn]);
+    %dump_to_file(['SpikeTime'],[Se.SpikeTime]);
+    % plot_graph('Output',
+			   %Se.Iexc,2, 200,-500,0,1380,720,5,1);
+ }
+}
+$
+
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('ses.tcob').
+%[ses].
+%sesynapse(_,_).
+
+
+
+

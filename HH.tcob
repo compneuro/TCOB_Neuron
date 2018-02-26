@@ -1,0 +1,104 @@
+% TCOB program to model neuron using Hodgkin Huxley model
+% Author: Manjusha Nair M @Amrita University
+
+{simulation_time = 5000, start_time([neuron,2],[hhmodel,0])}      %for 100 ms simulation
+class neuron
+{
+  attributes
+          %Conductances and reversal potential of the three ion channels
+        real Gna,Ena;
+        real Gk,Ek;
+        real Gleak,Eleak;
+	series real Istim;                             %current stimulus
+        % real Istim;
+        series real M,N,H;          %Activation and Inactivation Parameters of the Ion channels
+        series real Vm;                               %membrane voltage
+        real C;                                   % Cell capacitance
+        real E;                                   %the constant
+        real Dt;                                  %Integration time constant
+   constraints
+     %The voltage equation
+     ( Vm-`Vm)= Dt *(Istim-((Gna*pow(`M,3)*`H*(`Vm+62-Ena))+(Gk*pow(`N,4)*(`Vm+62-Ek))+(Gleak*(`Vm+62-Eleak))))/C;
+     %m,n,h dynamics
+       ( M-`M)=Dt *((1-`M) * ((0.1*(-Vm-62 + 25))/(pow(E,(-Vm-62 + 25)/10)-1)) - 4 * pow(E,(-Vm-62) / 18)*`M);
+       (N-`N)=Dt *((1-`N) * (((0.1/10)*(-Vm-62+10))/(pow(E,(-Vm-62+ 10)/10)-1)) - 0.125*pow(E,(-Vm-62)/80)*`N);
+       (H-`H)=Dt *((1-H) * ((0.7/10)*pow(E,(-Vm-62)/20)) - (1/(pow(E,(-Vm-62+30)/10)+1))*`H);
+       Time < 2500 -->Istim = 5;
+       Time >= 2500 -->Istim = 50;
+
+   constructors neuron(G1,E1,G2,E2,G3,E3)
+   {
+     Gna = G1;Ena = E1;
+     Gk = G2;Ek = E2;
+     Gleak = G3;Eleak = E3;
+
+     C=1;
+     Dt=0.02;
+     M<1>  = 0.068775;                 %initial values
+     N<1> = 0.35286656;
+     H<1> = 0.515186;
+     Vm<1>  = -70;               %resting voltage of the cell.
+    % Istim = 6.0;
+     Istim<1> = 0;
+     E = 2.718281828;
+   }
+}
+class hhmodel
+{
+  attributes
+            neuron N1;
+             %real[] Answer;
+  constructors hhmodel()
+  {
+
+    N1 = new neuron(120.0,115.0,36.0,-12.0,0.3,10.6);
+    % Answer=N1.Vm;
+     % plot_graph('Output',
+			  % Answer,1,300,-80,80,1800,800,20,0.02);
+   % dump_to_file(['Vm'],[N1.Vm]);
+    dump_to_file(['Istim','Vm'],[N1.Istim,N1.Vm]);
+  }
+}
+$
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('HH.tcob').
+%['HH'].
+%hhmodel(_,_).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

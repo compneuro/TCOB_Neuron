@@ -1,0 +1,86 @@
+% model of synapses :  Double Exponential
+% ------------------------------------------------------------
+%     Gsyn= Gmax * Fnorm*((Math.exp(-(t - t0) / Taudecay)) - (Math.exp(-(t - t0) / Taurise)))
+%      Fnorm = (1/ (-(Math.exp(-(t - t0) / Taurise)))+ (Math.exp(-(t - t0) / Taudecay)));
+%      Tpeak = SpikeTime +(((Taudecay*Taurise)/(Taudecay - Taurise)) * ln(Taudecay/Taurise));
+%      Isyn  = Gsyn *  (Vm- Esyn)
+%--------------------------------------------------------------
+%Author: Manjusha Nair M @Amrita University
+
+{simulation_time = 5000, start_time([doubleexponential,2])} %for 100 ms simulation
+class doubleexponential
+{
+   attributes
+     series real Gsyn;
+     series real Isyn;
+     series real SpikeTime;
+     series real TimeElapsed;
+     series real Tpeak;
+     series real Fnorm;
+       real Gmax;
+       real E;
+       real Taudecay;
+       real Taurise;
+       real Vm;
+       real Esyn;
+       real Dt;
+      % real [5] Input;
+        real Input;
+
+   constraints
+       TimeElapsed = Time*Dt;
+      member(TimeElapsed, Input) -->  SpikeTime = Time*Dt;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+      TimeElapsed < Input<1> --> Tpeak = 0;
+      TimeElapsed >= Input<1> --> Tpeak = SpikeTime +(((Taudecay*Taurise)/(Taudecay - Taurise)));%* log(Taudecay/Taurise));
+      TimeElapsed < Input<1> --> Fnorm = 0;
+      TimeElapsed >= Input<1> --> Fnorm = (1/ (- pow(E,-( (Tpeak - SpikeTime) / Taurise))+  pow(E,-( (Tpeak - SpikeTime) / Taudecay))));
+      TimeElapsed < Input<1> --> Gsyn = 0;
+      TimeElapsed >= Input<1> --> Gsyn= Gmax * Fnorm*( pow(E,-((TimeElapsed - SpikeTime) / Taudecay)) -  pow(E,-( (TimeElapsed - SpikeTime) / Taurise))) ;
+      TimeElapsed <  Input<1> --> (Isyn = 0);
+      TimeElapsed >=  Input<1> --> (Isyn  = Gsyn *  (Vm- Esyn));
+
+     constructors doubleexponential()
+  {
+ % Input=[20.0,30.0,40.0,50.0,60.0];
+   Input=[20.0];
+   Gmax = 3.0;
+   Esyn=15.0;
+   Taudecay=3.0;
+   Taurise=12.0;
+   Vm = -70.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   Gsyn<1> = 0;
+   Isyn<1> =0;
+  }
+}
+
+class desynapse
+{
+ attributes
+      doubleexponential De;
+
+ constructors desynapse()
+ {
+   De = new doubleexponential();
+    %dump_to_file(['Time','Isyn','SpikeTime'],[De.TimeElapsed,De.Isyn,De.SpikeTime]);
+    dump_to_file(['Time','Isyn'],[De.TimeElapsed,De.Isyn]);
+    %dump_to_file(['SpikeTime'],[De.SpikeTime]);
+    % plot_graph('Output',
+			   %Se.Iexc,2, 200,-500,0,1380,720,5,1);
+ }
+}
+$
+
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('des.tcob').
+%[des].
+%desynapse(_,_).
+
+
+

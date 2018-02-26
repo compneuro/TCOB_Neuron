@@ -1,0 +1,236 @@
+% Adex model of neuron receiving excitatory and inhibitory synaptic inputs 
+%Author: Manjusha Nair M @Amrita University
+ 
+ {simulation_time = 5000, start_time([ampa,2],[gaba,2],[nmda,2],[adex,2],[adexneuron,1])} % 100 ms simulation
+ 
+ class ampa
+ {
+    attributes
+      series real Gampa;
+      series real Iampa;
+      series real SpikeTime;
+      series real TimeElapsed;
+        real Gmax;
+        real E;
+        real Vm;
+        real Eampa;
+        real Dt;
+      % real [5] Input;
+        real Input;
+ 
+    constraints
+       TimeElapsed = Time*Dt;
+       member(TimeElapsed, Input) -->  SpikeTime = Time;
+       not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+       TimeElapsed < Input<1> --> Gampa = 0;
+       TimeElapsed >= Input<1> --> Gampa= Gmax* pow(E,-(TimeElapsed/18))* ((1- pow(E,-(TimeElapsed/2.2)) / 0.68));
+       TimeElapsed <  Input<1> --> (Iampa = 0);
+       TimeElapsed >=  Input<1> --> (Iampa  = Gampa*  (Vm- Eampa));
+ 
+ 
+      constructors ampa()
+   {
+    %Input=[20.0,30.0,40.0,50.0,60.0];
+     Input=[20.0];
+    Gmax = 50.0;
+    Eampa = 0.0;
+    Vm = -65.0;
+    E = 2.718281828;
+    Dt =0.02;
+    SpikeTime<1> =0; %set initial value
+    TimeElapsed<1> =0;
+    Gampa<1> = 0;
+    Iampa<1> =0;
+   }
+}
+class nmda
+{
+   attributes
+     series real Gnmda;
+     series real Inmda;
+     series real SpikeTime;
+     series real TimeElapsed;
+       real Gmax;
+       real E;
+       real Vm;
+       real Enmda;
+       real Dt;
+       real Kmg;
+       real FbyRT;
+       real Mgc;
+      %real [5] Input;
+      real Input;
+
+   constraints
+      TimeElapsed = Time*Dt;
+      member(TimeElapsed, Input) -->  SpikeTime = Time*Dt;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+      Kmg = 0.00107* pow(E,(2*0.73*Vm*FbyRT));
+      TimeElapsed < Input<1> --> Gnmda = 0;
+      TimeElapsed >= Input<1> --> Gnmda= Gmax* (1-(1/(1+(Kmg/Mgc))))* pow(E,-(TimeElapsed-5)/71)* ((1- pow(E,-(TimeElapsed-5)/13.2)) / 0.60);
+      TimeElapsed <  Input<1> --> (Inmda = 0);
+      TimeElapsed >=  Input<1> --> (Inmda  = Gnmda*  (Vm- Enmda));
+
+
+     constructors nmda()
+  {
+   %Input=[20.0,30.0,40.0,50.0,60.0];
+   Input=[20.0];
+   Gmax = 50.0;
+   Enmda = 0.0;
+   FbyRT = 0.038921;    % mV at room temp. T = 25 degree celsius
+   Mgc = 1.5;
+   Vm = -65.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   Gnmda<1> = 0;
+   Inmda<1> =0;
+  }
+}
+
+class gaba
+{
+   attributes
+     series real GsynA;
+     series real IsynA;
+     series real GsynB;
+     series real IsynB;
+     series real Igaba;
+     series real SpikeTime;
+     series real TimeElapsed;
+     series real Vm;
+       real GmaxA;
+       real GmaxB;
+       real E;
+       real EsynA;
+       real EsynB;
+       real Dt;
+       %real [5] Input;
+        real Input;
+
+   constraints
+      TimeElapsed = Time*Dt;
+      member(TimeElapsed, Input) -->  SpikeTime = TimeElapsed;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+     TimeElapsed < Input[1] --> GsynA = 0;
+     TimeElapsed >= Input[1] --> GsynA= GmaxA * pow(E,-(TimeElapsed/25))* ((1- pow(E,-(TimeElapsed/1)) / 0.84));
+     TimeElapsed <  Input[1] --> (IsynA = 0.0);
+     TimeElapsed >=  Input[1] --> (IsynA  = GsynA *  (Vm- EsynA));
+       TimeElapsed < Input[1] --> GsynB = 0.0;
+      TimeElapsed >= Input[1] --> GsynB= GmaxB *(0.84*pow(E,-(TimeElapsed/283))+0.16*pow(E,-(TimeElapsed/10226)))*((pow((1- pow(E,-(TimeElapsed/112))),4))/0.84);
+
+TimeElapsed <  Input[1] --> (IsynB = 0.0);
+      TimeElapsed >=  Input[1] --> (IsynB  = GsynB *  (Vm- EsynB));
+      TimeElapsed <  Input[1] --> (Igaba = 0.0);
+      TimeElapsed >=  Input[1] -->  Igaba = IsynA+IsynB;
+      TimeElapsed >=  Input[1] -->  Igaba = IsynB;
+     constructors gaba()
+  {
+   % Input=[20.0,30.0,40.0,50.0,60.0];
+    Input = [20.0];
+      GmaxA = -100.0;
+   GmaxB = -4;
+   EsynA= -75.0;
+   EsynB = -100.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   GsynA<1> = 0;
+   GsynB<1> = 0;
+   IsynA<1> = 0;
+   IsynB<1> = 0;
+   Igaba<1> =0;
+  }
+}
+
+
+class adex
+{
+  attributes
+
+         real C;  % capacitance
+   % scaling Parameters
+        real Gleak;  %Leak conductance
+        real Eleak;  %Leak reversal potential
+        real Delta; % The slope factor
+        real Vt;  %Threshold voltage
+
+   %Bifurcation Parameters
+        real A;  % Adaptation coupling parameter
+        real B ;  %reset adaptation value
+        real Tw;  % Adaptation Time constant;
+        real Vr;  %Reset voltage
+
+        series real W ;  %adaptation variable
+        series real Vm;
+        series int Flag;
+
+        series real Iin; % Input current
+	series real Varray;
+        real V;
+        real E;
+        real Dt;
+    constraints
+        Flag=1 --> ( C * (Vm -` Vm) /Dt=
+                               - Gleak*(`Vm - Eleak) - `W + (-`Iin)
+                               + Gleak*Delta*pow(E,(`Vm-Vt)/Delta)) ;
+        Flag=1 --> (Tw * (W - `W)/Dt= A * (`Vm - Eleak ) - `W) ;
+        Flag =1 --> Varray=Vm;
+        Vm > -32  --> (Vm` = Vr) ;
+        Vm> -32  --> (W`= W + B) ;
+        Vm > -32  -->  Flag`=0;
+        Vm <= -32  -->  Flag`=1 ;
+        Flag = 0 --> Varray = 30.0;
+   constructor adex(Cap,GV,EE,D1,V1,A1,B1,WW,T1,Vr1){
+        Gleak=GV;Eleak=EE;Delta=D1;Vt=V1;A=A1;B=B1;WW=W<1>;Tw=T1;Vr=Vr1;
+         C = Cap;
+        E = 2.71828;
+        V = -60.0;
+        Dt=0.02;
+        Flag<2> = 1;
+        Vm<1>  = -60.0;
+    }
+}
+class adexneuron
+{
+    attributes
+        adex Ad;
+       ampa Am;
+         gaba Ga;
+      nmda Nm;
+
+    constraints
+
+        Am.Vm = Ad.Vm;
+        Ga.Vm = Ad.Vm;
+       Nm.Vm = Ad.Vm;
+        Ad.Iin =Am.Iampa+Ga.Igaba+Nm.Inmda;
+
+      Time=10000 -->dump_to_file(['G'],[Ga.GsynB]);
+    constructor adexneuron(){
+        Ad = new adex(200.0,10.0,-70.0,2.0,-50.0,2.0,0.0,0.0,30.0,-58.0);
+        Am = new ampa();
+         Ga = new gaba();
+        Nm = new nmda();
+
+       %plot_graph('Output-Adex',
+			   %Adex.Vm,1, 220,-80,80,1380,720,5,0.02);
+    }
+
+}
+$
+
+
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('adexwithsynapse.tcob').
+%[adexwithsynapse].
+%adexneuron(_,_).
+
+
+
+

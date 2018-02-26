@@ -1,0 +1,65 @@
+% Izhikevich model of spiking neuron
+% Author: Manjusha Nair M @Amrita University
+
+{simulation_time = 5000, start_time([neuron,2],[izhikevichmodel,0])}   %for 100 ms simulation time
+
+class neuron
+ {
+  attributes
+     series real Vm;
+     series real U;
+     series int Flag;
+    % series real I;
+     real A;           % time scale of U
+     real B;            % sensitivity of U to subthreshold fluctuations of Vm
+     real C;            % after spike reset value of Vm
+     real D;              % after spike reset of U
+     real I;            % injected current
+     real Dt;
+	series real Varray;
+  constraints
+     Flag=1 -->(Vm - `Vm)/Dt= ((0.4/10) * `Vm * `Vm+ 5*`Vm + 140 - `U + I);
+     Flag=1 -->(U - `U)/Dt = A * (B * `Vm - `U);
+     Vm > -30  --> (Vm` = C) ;
+     Vm > -30  --> (U`= U + D) ;
+     Vm > -30  -->  Flag`=0;
+     Vm <= -30  -->  Flag`=1 ;
+     Flag =1 --> Varray=Vm;
+     Flag = 0 --> Varray = 30.0;
+     
+  constructors neuron()
+  {
+    A = 0.012;
+    B = 0.2;
+    C = -65.0;
+    D = 4.0;
+    Vm<1> = -60.0;
+    U<1> = B* Vm<1>;
+    %U<1> = -0.4;
+    Flag<2> = 1;
+    I = 10.0;       % the injected current
+    % I<1> = 0;
+    Dt=0.02;
+  }
+}
+
+class izhikevichmodel
+{
+ attributes
+   neuron Iz ;
+ constructors izhikevichmodel()
+ {
+  Iz = new neuron();
+  dump_to_file(['Vm','U'],[Iz.Vm,Iz.U]);
+       % plot_graph('Output-Iz',
+	%		   Iz.Vm,1, 220,-80,80,1380,720,5,0.02);
+   %dump([Iz.Vm]);
+ }
+}
+$
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('izhikevich.tcob').
+%[izhikevich].
+%izhikevichmodel(_,_).

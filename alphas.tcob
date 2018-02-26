@@ -1,0 +1,77 @@
+% model of synapses :  Alpha Synapse
+% ------------------------------------------------------------
+%     Gsyn = Gmax * (t-t0)/tausyn)* Math.( exp(-(t-t0)/tausyn)
+%      Isyn  = Gsyn *  (Vm- Esyn)
+%--------------------------------------------------------------
+%author: Manjusha Nair M @ Amrita University
+
+{simulation_time = 5000, start_time([alpha,2])}  % for 100 ms simulation
+class alpha
+{
+   attributes
+     series real Gsyn;
+     series real Isyn;
+     series real SpikeTime;
+     series real TimeElapsed;
+       real Gmax;
+       real E;
+       real Tausyn;
+       real Vm;
+       real Esyn;
+       real Dt;
+      real [5] Input;
+     % real Input;
+
+   constraints
+       TimeElapsed = Time*Dt;
+      member(TimeElapsed, Input) -->  SpikeTime = Time*Dt;
+      not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+      TimeElapsed < Input<1> --> Gsyn = 0;
+      TimeElapsed >= Input<1> --> Gsyn= Gmax * ((TimeElapsed - SpikeTime) / Tausyn)* pow(E,-( (TimeElapsed - SpikeTime) / Tausyn));
+      TimeElapsed <  Input<1> --> (Isyn = 0);
+      TimeElapsed >=  Input<1> --> (Isyn  = Gsyn *  (Vm- Esyn));
+
+     constructors alpha()
+  {
+   Input=[20.0,25.0,30.0,35.0,40.0];
+  % Input=[20.0];
+
+   Gmax = 3.0;
+   Esyn=15.0;
+   Tausyn=1.7;
+   Vm = -70.0;
+   E = 2.718281828;
+   Dt =0.02;
+   SpikeTime<1> =0; %set initial value
+   TimeElapsed<1> =0;
+   Gsyn<1> = 0;
+   Isyn<1> =0;
+  }
+}
+
+
+class alphasynapse
+{
+ attributes
+      alpha Al;
+
+ constructors alphasynapse()
+ {
+   Al = new alpha();
+    %dump_to_file(['Time','Isyn','SpikeTime'],[Al.TimeElapsed,Al.Isyn,Al.SpikeTime]);
+    dump_to_file(['Time','Gsyn'],[Al.TimeElapsed,Al.Gsyn]);
+    % plot_graph('Output',
+			   %Se.Iexc,2, 200,-500,0,1380,720,5,1);
+ }
+}
+$
+
+%Compilation and Execution commands
+%load main
+%[main].
+%tcob2swi('alphas.tcob').
+%[alphas].
+%alphasynapse(_,_).
+
+
+
