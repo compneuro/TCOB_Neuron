@@ -1,7 +1,8 @@
 % Izhikevich model of spiking neuron
-% Author: Manjusha Nair M @Amrita University
+%Authors: Manjusha Nair M, Jinesh Manchan Kannimoola@ Amrita Vishwa Vidyapeetham
+%........................................................................................
 
-{simulation_time = 5000, start_time([neuron,2],[izhikevichmodel,0])}   %for 100 ms simulation time
+{simulation_start= 2, simulation_end =5000}    %for 100 ms simulation time
 
 class neuron
  {
@@ -9,14 +10,13 @@ class neuron
      series real Vm;
      series real U;
      series int Flag;
-    % series real I;
      real A;           % time scale of U
      real B;            % sensitivity of U to subthreshold fluctuations of Vm
      real C;            % after spike reset value of Vm
      real D;              % after spike reset of U
      real I;            % injected current
      real Dt;
-	series real Varray;
+     series real Varray;
   constraints
      Flag=1 -->(Vm - `Vm)/Dt= ((0.4/10) * `Vm * `Vm+ 5*`Vm + 140 - `U + I);
      Flag=1 -->(U - `U)/Dt = A * (B * `Vm - `U);
@@ -26,7 +26,7 @@ class neuron
      Vm <= -30  -->  Flag`=1 ;
      Flag =1 --> Varray=Vm;
      Flag = 0 --> Varray = 30.0;
-     
+
   constructors neuron()
   {
     A = 0.012;
@@ -35,10 +35,8 @@ class neuron
     D = 4.0;
     Vm<1> = -60.0;
     U<1> = B* Vm<1>;
-    %U<1> = -0.4;
     Flag<2> = 1;
     I = 10.0;       % the injected current
-    % I<1> = 0;
     Dt=0.02;
   }
 }
@@ -49,17 +47,17 @@ class izhikevichmodel
    neuron Iz ;
  constructors izhikevichmodel()
  {
-  Iz = new neuron();
-  dump_to_file(['Vm','U'],[Iz.Vm,Iz.U]);
-       % plot_graph('Output-Iz',
-	%		   Iz.Vm,1, 220,-80,80,1380,720,5,0.02);
-   %dump([Iz.Vm]);
+   Iz = new neuron();
+   Time= 5000 --> dump_to_file(['Vm','U'],[Iz.Vm,Iz.U]);
+   Time= 5000 --> plot_graph('Izhikevich',Iz.Vm,0.04, 100,-80,0,720,500,5,0.02);
  }
 }
 $
-%Compilation and Execution commands
-%load main
-%[main].
-%tcob2swi('izhikevich.tcob').
-%[izhikevich].
-%izhikevichmodel(_,_).
+%.................................................................
+%Use the following Compilation and Execution commands
+%.................................................................
+%?- [tcob2swi].
+%?- tcob2swi('izhikevich.tcob','izhikevichmodel()').
+%?- [izhikevich].
+%?- main(_,_).
+%..................................................................

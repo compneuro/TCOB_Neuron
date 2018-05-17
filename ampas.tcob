@@ -1,26 +1,21 @@
-% model of synapses :  AMPA Synapse
-% ------------------------------------------------------------
-%     Reference: Mccormick,1993
+% model of synapses :  AMPA Synapse, Reference: Mccormick,1993
 %--------------------------------------------------------------
-%Author: Manjusha Nair M @Amrita University
-
-{simulation_time = 5000, start_time([ampa,2])} %for 100ms simulation
+%Authors: Manjusha Nair M, Jinesh Manchan Kannimoola@ Amrita Vishwa Vidyapeetham
+{simulation_start= 2, simulation_end =5000} %for 100ms simulation
 class ampa
 {
-   attributes
+attributes
      series real Gampa;
      series real Iampa;
      series real SpikeTime;
      series real TimeElapsed;
-       real Gmax;
-       real E;
-       real Vm;
-       real Eampa;
-       real Dt;
-     % real [5] Input;
-       real Input;
-
-   constraints
+     real Gmax;
+     real E;
+     real Vm;
+     real Eampa;
+     real Dt;
+     real Input;
+constraints
       TimeElapsed = Time*Dt;
       member(TimeElapsed, Input) -->  SpikeTime = Time;
       not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
@@ -28,48 +23,41 @@ class ampa
       TimeElapsed >= Input<1> --> Gampa= Gmax* pow(E,-(TimeElapsed/18))* ((1- pow(E,-(TimeElapsed/2.2)) / 0.68));
       TimeElapsed <  Input<1> --> (Iampa = 0);
       TimeElapsed >=  Input<1> --> (Iampa  = Gampa*  (Vm- Eampa));
-
-
-     constructors ampa()
-  {
-   %Input=[20.0,30.0,40.0,50.0,60.0];
-    Input=[20.0];
-   Gmax = 50.0;
-   Eampa = 0.0;
-   Vm = -65.0;
-   E = 2.718281828;
-   Dt =0.02;
-   SpikeTime<1> =0; %set initial value
-   TimeElapsed<1> =0;
-   Gampa<1> = 0;
-   Iampa<1> =0;
-  }
+constructors ampa()
+ {
+      Input=[20.0];
+      Gmax = 50.0;
+      Eampa = 0.0;
+      Vm = -65.0;
+      E = 2.718281828;
+      Dt =0.02;
+      SpikeTime<1> =0; %set initial value
+      TimeElapsed<1> =0;
+      Gampa<1> = 0;
+      Iampa<1> =0;
+ }
 }
 class ampasynapse
 {
- attributes
-      ampa Am;
-
- constructors ampasynapse()
- {
-   Am = new ampa();
-    %dump_to_file(['Time','Isyn','SpikeTime'],[Am.TimeElapsed,Am.Iampa,Am.SpikeTime]);
-    dump_to_file(['Time','Gsyn'],[Am.TimeElapsed,Am.Gampa]);
-
-    % plot_graph('Output',
-			   %Am.Iampa,2, 200,-500,0,1380,720,5,1);
+attributes
+    ampa Am;
+constructors ampasynapse()
+  {
+    Am = new ampa();
+    Time= 5000 --> dump_to_file(['Time','Isyn'],[Am.TimeElapsed,Am.Iampa]);
+    Time= 5000 -->plot_graph('output',Am.Iampa,0.04, 100,-1200,20,720,500,5,0.02);
  }
 }
 $
-
-
-
-%Compilation and Execution commands
-%load main
-%[main].
-%tcob2swi('ampas.tcob').
+%.................................................................
+%Use the following Compilation and Execution commands
+%.................................................................
+%[tcob2swi].
+%tcob2swi('ampas.tcob','ampasynapse()').
 %[ampas].
-%ampasynapse(_,_).
+%main(_,_).
+%.....................................................................
+
 
 
 

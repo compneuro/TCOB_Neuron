@@ -5,9 +5,10 @@
 %      Tpeak = SpikeTime +(((Taudecay*Taurise)/(Taudecay - Taurise)) * ln(Taudecay/Taurise));
 %      Isyn  = Gsyn *  (Vm- Esyn)
 %--------------------------------------------------------------
-%Author: Manjusha Nair M @Amrita University
 
-{simulation_time = 5000, start_time([doubleexponential,2])} %for 100 ms simulation
+%Authors: Manjusha Nair M, Jinesh Manchan Kannimoola@ Amrita Vishwa Vidyapeetham
+
+{simulation_start= 2, simulation_end =5000} %for 100 ms simulation
 class doubleexponential
 {
    attributes
@@ -17,70 +18,64 @@ class doubleexponential
      series real TimeElapsed;
      series real Tpeak;
      series real Fnorm;
-       real Gmax;
-       real E;
-       real Taudecay;
-       real Taurise;
-       real Vm;
-       real Esyn;
-       real Dt;
-      % real [5] Input;
-        real Input;
-
+     real TT;
+     real Gmax;
+     real E;
+     real Taudecay;
+     real Taurise;
+     real Vm;
+     real Esyn;
+     real Dt;
+     real Input;
    constraints
-       TimeElapsed = Time*Dt;
+      TimeElapsed = Time*Dt;
+      log(Taudecay/Taurise, TT);
       member(TimeElapsed, Input) -->  SpikeTime = Time*Dt;
       not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
-      TimeElapsed < Input<1> --> Tpeak = 0;
-      TimeElapsed >= Input<1> --> Tpeak = SpikeTime +(((Taudecay*Taurise)/(Taudecay - Taurise)));%* log(Taudecay/Taurise));
-      TimeElapsed < Input<1> --> Fnorm = 0;
-      TimeElapsed >= Input<1> --> Fnorm = (1/ (- pow(E,-( (Tpeak - SpikeTime) / Taurise))+  pow(E,-( (Tpeak - SpikeTime) / Taudecay))));
-      TimeElapsed < Input<1> --> Gsyn = 0;
-      TimeElapsed >= Input<1> --> Gsyn= Gmax * Fnorm*( pow(E,-((TimeElapsed - SpikeTime) / Taudecay)) -  pow(E,-( (TimeElapsed - SpikeTime) / Taurise))) ;
-      TimeElapsed <  Input<1> --> (Isyn = 0);
-      TimeElapsed >=  Input<1> --> (Isyn  = Gsyn *  (Vm- Esyn));
+      TimeElapsed < Input[1] --> Tpeak = 0;
+      TimeElapsed >= Input[1] --> Tpeak = SpikeTime +(((Taudecay*Taurise)/(Taudecay - Taurise))*TT);
+      TimeElapsed < Input[1] --> Fnorm = 0;
+      TimeElapsed >= Input[1] --> Fnorm = (1/ (- pow(E,-( (Tpeak - SpikeTime) / Taurise))+  pow(E,-( (Tpeak - SpikeTime) / Taudecay))));
+      TimeElapsed < Input[1] --> Gsyn = 0;
+      TimeElapsed >= Input[1] --> Gsyn= Gmax * Fnorm*( pow(E,-((TimeElapsed - SpikeTime) / Taudecay)) -  pow(E,-( (TimeElapsed - SpikeTime) / Taurise))) ;
+      TimeElapsed <  Input[1] --> (Isyn = 0);
+      TimeElapsed >=  Input[1] --> (Isyn  = Gsyn *  (Vm- Esyn));
 
-     constructors doubleexponential()
-  {
- % Input=[20.0,30.0,40.0,50.0,60.0];
-   Input=[20.0];
-   Gmax = 3.0;
-   Esyn=15.0;
-   Taudecay=3.0;
-   Taurise=12.0;
-   Vm = -70.0;
-   E = 2.718281828;
-   Dt =0.02;
-   SpikeTime<1> =0; %set initial value
-   TimeElapsed<1> =0;
-   Gsyn<1> = 0;
-   Isyn<1> =0;
+constructors doubleexponential()
+    {
+      Input=[20.0];
+      Gmax = 3.0;
+      Esyn=15.0;
+      Taudecay=3.0;
+      Taurise=12.0;
+      Vm = -70.0;
+       E = 2.718281828;
+       Dt =0.02;
+       SpikeTime<1> =0; %set initial value
+      TimeElapsed<1> =0;
+      Gsyn<1> = 0;
+      Isyn<1> =0;
   }
 }
-
 class desynapse
 {
  attributes
       doubleexponential De;
-
  constructors desynapse()
- {
-   De = new doubleexponential();
-    %dump_to_file(['Time','Isyn','SpikeTime'],[De.TimeElapsed,De.Isyn,De.SpikeTime]);
-    dump_to_file(['Time','Isyn'],[De.TimeElapsed,De.Isyn]);
-    %dump_to_file(['SpikeTime'],[De.SpikeTime]);
-    % plot_graph('Output',
-			   %Se.Iexc,2, 200,-500,0,1380,720,5,1);
- }
+  {
+     De = new doubleexponential();
+     Time= 5000 --> dump_to_file(['Time','Isyn'],[De.TimeElapsed,De.Isyn]);
+     Time= 5000 -->plot_graph('DES',De.Isyn,0.04, 100,-500,0,720,500,5,0.02);
+  }
 }
 $
-
-%Compilation and Execution commands
-%load main
-%[main].
-%tcob2swi('des.tcob').
-%[des].
-%desynapse(_,_).
-
+%.................................................................
+%Use the following Compilation and Execution commands
+%.................................................................
+%?- [tcob2swi].
+%?- tcob2swi('des.tcob','desynapse()').
+%?- [des].
+%?- main(_,_).
+%..................................................................
 
 

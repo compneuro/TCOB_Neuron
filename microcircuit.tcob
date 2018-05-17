@@ -1,0 +1,181 @@
+% TCOB program to generate a small microcircuit model of cerebellum
+%Authors: Manjusha Nair M, Jinesh Manchan Kannimoola@ Amrita Vishwa Vidyapeetham
+%........................................................................................
+
+{simulation_start= 2, simulation_end =5000} 
+%for 100 ms simulation time 
+class adex
+{
+  attributes
+         real C,Gleak,Eleak,Delta,Vt,A,B,Tw,Vr;
+         real E,Dt;
+         real []SpikeTrain;
+         series real W,Vm,Iin,Varray;
+         series int Flag;
+   constraints
+        Flag=1 --> ( C * (Vm -` Vm) /Dt=
+                               - Gleak*(`Vm - Eleak) - `W + (-`Iin)
+                               + Gleak*Delta*pow(E,(`Vm-Vt)/Delta)) ;
+        Flag=1 --> (Tw * (W - `W)/Dt= A * (`Vm - Eleak ) - `W) ;
+        Flag =1 --> Varray=Vm;
+        Vm > -43  --> (Vm` = Vr) ;
+        Vm> -43 --> (W`= W + B) ;
+        Vm > -43  -->  Flag`=0;
+        Vm <= -43  -->  Flag`=1 ;
+        Flag = 0 --> Varray = 30.0;
+	Flag = 0 --> addtoarray(SpikeTrain,Time*Dt);
+   constructors adex(Cap,GV,EE,D1,V1,A1,B1,WW,T1,Vr1){
+       Gleak=GV;Eleak=EE;Delta=D1;Vt=V1;A=A1;B=B1;WW=W<1>;Tw=T1;Vr=Vr1;
+         C = Cap;
+        E = 2.71828;
+        Dt=0.02;
+        Flag<2> = 1;
+        Vm<1>  = -60.0;
+        Iin<1> =0;
+    }
+    adex(){
+        E = 2.71828;
+        Dt=0.02;
+        Flag<2> = 1;
+        Vm<1>  = -60.0;
+        Iin<1> =0;
+    }
+}
+class granule extends adex
+{
+   attributes
+     series Real MfInput;
+     series Real GoCInput;
+     series Real Output;
+ constructor granule(Cap,GL,EL,Dta,VT1,A1,B1,WW,TW1,Vr1)
+ {
+   C=Cap;Gleak=GL;Eleak=EL;Delta=Dta;Vt=VT1;A=A1;B=B1;Tw=TW1;Vr=Vr1;
+ }
+
+}
+class golgi extends adex
+{
+     attributes
+       series Real MfInput;
+       series Real Output;
+constructor golgi(Cap,GL,EL,Dta,VT1,A1,B1,WW,TW1,Vr1)
+ {
+   C=Cap;Gleak=GL;Eleak=EL;Delta=Dta;Vt=VT1;A=A1;B=B1;Tw=TW1;Vr=Vr1;
+ }
+}
+class purkinje extends adex
+{
+    attributes
+         series Real GrCInput;
+         series Real Output;
+    constructor purkinje(Cap,GL,EL,Dta,VT1,A1,B1,WW,TW1,Vr1)
+    {
+      C=Cap;Gleak=GL;Eleak=EL;Delta=Dta;Vt=VT1;A=A1;B=B1;Tw=TW1;Vr=Vr1;
+    }
+}
+class mossyfiber
+{
+   attributes
+     series Real Input,TimeElapsed;
+     Real Dt;
+   constraints
+      Dt=0.02;
+     TimeElapsed = Time*Dt;
+     TimeElapsed <  20 --> Input = 0;
+     TimeElapsed >=  20 --> Input = 20;
+}
+class parallelfiber
+{
+   attributes
+     series Real Input;
+   
+
+}
+class ampa
+ {
+    attributes
+      series Real Gampa,Iampa,SpikeTime,TimeElapsed,Gmax,No,E,Eampa,Dt,Vm,Input;
+    constraints
+       TimeElapsed = Time*Dt;
+       member(TimeElapsed, Input) -->  SpikeTime = Time;
+       not( member(TimeElapsed, Input)) -->  SpikeTime = `SpikeTime;
+       TimeElapsed < Input<1> --> Gampa = 0;
+       TimeElapsed >= Input<1> --> Gampa= No* Gmax* pow(E,-(TimeElapsed/18))* ((1- pow(E,-(TimeElapsed/2.2)) / 0.68));
+       TimeElapsed <  Input<1> --> Iampa = 0;
+       TimeElapsed >=  Input<1> --> Iampa  =Dt* Gampa*  (Vm- Eampa);
+        No =1 --> Gmax=5;
+        No =2 --> Gmax= 5;
+        No=3 -->Gmax=10;
+        No=4 -->Gmax=15;
+      constructors ampa()
+      {
+       Input=[20.0];
+       Eampa = 0.0;
+       E = 2.718281828;
+       Dt =0.02;
+       SpikeTime<1> =0; %set initial value
+       TimeElapsed<1> =0.02;
+       Gampa<1> = 0;
+        Iampa<1> =0;
+   }
+}
+class mcircuit
+{
+  attributes
+        mossyfiber Mf;
+        parallelfiber Pf;
+        Adex Ad;
+        granule GrC;
+        golgi GoC;
+        purkinje Pc;
+   constraints
+         GoC.MfInput = Mf.Input;
+         GoC.Output = GoC.SpikeTrain;
+         GrC.MfInput = Mf.Input;
+         GrC.GoCInput =  GoC.Output;
+         GrC.Output = GrC.SpikeTrain;
+         Pf.Input = GrC.Output;
+         Pc.GrCInput = Pf.Input;
+         Pc.Output = Pc.SpikeTrain;
+        
+    constructor mcircuit(){
+        Mf = new mossyfiber();
+        GrC = new granule(150.0,10.0,-70.0,4.0,-50.0,9.0,250.0,0.0,-13.0,-64.0);
+        GoC = new golgi(150.0,10.0,-70.0,4.0,-50.0,9.0,250.0,0.0,-13.0,-64.0);
+        Pc = new purkinje(150.0,10.0,-70.0,4.0,-50.0,9.0,250.0,0.0,-13.0,-64.0);
+        Time=5000 -->dump_to_file(['MF Input','GoC Input'],[GrC.MfInput,GrC.GoCInput]);
+        Time= 5000 --> plot_graph('MF Input',GrC.MfInput,0.04, 100,0,20,720,500,5,0.02);
+       }
+}
+$
+
+%.................................................................
+%Use the following Compilation and Execution commands
+%.................................................................
+%?- [tcob2swi].
+%?- tcob2swi('microcircuit.tcob','mcircuit()').
+%?- [microcircuit].
+%?- main(_,_).
+%................................................................
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

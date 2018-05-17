@@ -1,81 +1,68 @@
 
-% Simulating an Array of neurons
-%Author: Manjusha Nair M @Amrita University
-
-{simulation_time = 5000, start_time([adexneuron,2],[network,0])} %for 100 ms simulation time
+% Simulating an Array of Adex neurons
+%authors: Manjusha Nair M, Jinesh Manchan Kannimoola@ Amrita Vishwa Vidyapeetham
+%..........................................................................................
+{simulation_start= 2, simulation_end =5000} %for 100 ms simulation time
 
 class adexneuron
 {
-  attributes
-        real C;
-   % scaling Parameters
-        real Gleak;  %Leak conductance
-        real Eleak;  %Leak reversal potential
-        real Delta; % The slope factor
-        real Vt;  %Threshold voltage
-
+ attributes
+    real C;
+   %scaling Parameters
+    real Gleak;  %Leak conductance
+    real Eleak;  %Leak reversal potential
+    real Delta; % The slope factor
+    real Vt;  %Threshold voltage
    %Bifurcation Parameters
-        real A;  % Adaptation coupling parameter
-        real B ;  %reset adaptation value
-        real Tw;  % Adaptation Time constant;
-        real Vr;  %Reset voltage
-
-        series real W ;  %adaptation variable
-        series real Vm;
-        series int Flag;
-        %series real Varray;
-        real[] SpikeTrain;
-        real Iin; % Input current
-        real V;
-        real E;
-        real Dt;
-    constraints
-        Flag=1 --> ( C * (Vm -` Vm) /Dt=
+    real A;  % Adaptation coupling parameter
+    real B ;  %reset adaptation value
+    real Tw;  % Adaptation Time constant;
+    real Vr;  %Reset voltage
+    series real W ;  %adaptation variable
+    series real Vm;
+    series int Flag;
+    %series real Varray;
+    real[] SpikeTrain;
+    real Iin; % Input current
+    real V;
+    real E;
+    real Dt;
+ constraints
+    Flag=1 --> ( C * (Vm -` Vm) /Dt=
                                - Gleak*(`Vm - Eleak) - `W + Iin
                                + Gleak*Delta*pow(E,(`Vm-Vt)/Delta)) ;
-        Flag=1 --> (Tw * (W - `W)/Dt= A * (`Vm - Eleak ) - `W) ;
-       % Flag =1 --> Varray=Vm;
-        Flag = 0 --> addtoarray(SpikeTrain,Time*Dt);  %predicate
-       % Flag = 1  -->SpikeTrain=0;
-        Vm > -32  --> (Vm` = Vr) ;
-        Vm> -32  --> (W`= W + B) ;
-        Vm > -32  -->  Flag`=0;
-        Vm <= -32  -->  Flag`=1 ;
-       % Flag = 0 --> Varray = 30.0;
-
-   constructor adexneuron(Cap,GV,EE,D1,V1,A1,B1,WW,T1,Vr1,I1){
-        Gleak=GV;Eleak=EE;Delta=D1;Vt=V1;A=A1;B=B1;WW=W<1>;Tw=T1;Vr=Vr1;Iin=I1;
-         C= Cap;
-        E = 2.71828;
-        V = -60;
-        Dt=0.02;
-        Flag<2> = 1;
-        Vm<1>  = -60;
-    }
+    Flag=1 --> (Tw * (W - `W)/Dt= A * (`Vm - Eleak ) - `W) ;
+    Flag = 0 --> addtoarray(SpikeTrain,Time*Dt);  %predicate
+    Vm > -32  --> (Vm` = Vr) ;
+    Vm> -32  --> (W`= W + B) ;
+    Vm > -32  -->  Flag`=0;
+    Vm <= -32  -->  Flag`=1 ;
+ constructor adexneuron(Cap,GV,EE,D1,V1,A1,B1,WW,T1,Vr1,I1){
+    Gleak=GV;Eleak=EE;Delta=D1;Vt=V1;A=A1;B=B1;WW=W<1>;Tw=T1;Vr=Vr1;Iin=I1;
+    C= Cap;
+    E = 2.71828;
+    V = -60;
+    Dt=0.02;
+    Flag<2> = 1;
+    Vm<1>  = -60;
+ }
 }
-
 class network
 {
-    attributes
-        adexneuron [10] Adex;
-        % real [10][100] ST;
-    constraints
-        forall I in 1..10:(
-        Adex[I] = new adexneuron(200.0,10.0,-70.0,2.0,-50.0,2.0,0.0,0.0,30.0,-58.0,500.0)
-       %	ST[I]= Adex[I].SpikeTrain
-		       );
-     dump_to_file(['SpikeTrain'],[Adex[1].SpikeTrain]);
-    constructor network(){
-
-
-      % plot_graph('Output-Adex',
-			  % Adex.Vm,1, 220,-80,80,1380,720,5,0.02);
-    }
+ attributes
+    adexneuron [10] Adex;
+ constraints
+    forall I in 1..10:(
+        Adex[I] = new adexneuron(200.0,10.0,-70.0,2.0,-50.0,2.0,0.0,0.0,30.0,-58.0,500.0));
+     Time=5000 --> dump_to_file(['SpikeTrain'],[Adex[1].SpikeTrain]);
+ constructors network(){ }
 }
 $
-%Compilation and Execution commands
-%load main
-%[main].
-%tcob2swi('adexnetwork.tcob').
-%[adexnetwork].
-%network(_,_).
+.................................................................
+Use the following Compilation and Execution commands
+.................................................................
+?-[tcob2swi].
+?-tcob2swi('adexnetwork.tcob','network()').
+?-[adexnetwork].
+?-main(_,_).
+.................................................................

@@ -1,5 +1,5 @@
-/* Adex Model  with synapse input in pure C
-author: Manjusha Nair
+/* Adex Model  with synapse:in C
+author: Manjusha Nair @Amrita Vishwa Vidyapeetham
 
 */
 #include <stdio.h>
@@ -10,7 +10,6 @@ author: Manjusha Nair
 float *HInputSpikeTime;
 typedef struct
 { 
- 
  double Cm;
  double Gl;        // The leak conductance
  double El;        // The leak reversal potential
@@ -18,16 +17,13 @@ typedef struct
  double Vt;        //Threshold voltage
  double a;         //Adaptation coupling parameter;
  double Tw;        //the adaptation time constant.
-    
  double Vr;        //reset of the voltage
  double b;        //reset adaptation value
  double w;        //adaptation variable
  double Iin;        //Input current
-
  double Vm;
  int spikes;
  double Vreset;
- 
  double* wArray ;//the parameter w changes with time
  double* VmArray;//The output voltage of the neuron
 
@@ -46,8 +42,7 @@ typedef Adex* AdexPtr;
 typedef Experiment* ExPtr;
 typedef struct
 {
-   
-       
+ 
     float gAMPA; //Total excitatory synaptic conductance.
     float gAMPAMax;//maximum excitatory synaptic conductance.
     float wAMPA; // excitatory connection wt;
@@ -58,7 +53,7 @@ typedef struct
 typedef struct
 {
   
-          float gNMDA; //Total excitatory synaptic conductance.
+         float gNMDA; //Total excitatory synaptic conductance.
 	    float gNMDAMax;//maximum excitatory synaptic conductance.
 	    float wNMDA; // excitatory connection wt;
 	    float INMDA; //Synaptically mediated current
@@ -74,6 +69,7 @@ typedef struct
  float EGABAa,EGABAb;
  float IGABAa,IGABAb,IGABA;
 }GABASynapse;
+/*Set the synaptic parameters */
 void setSynapse(AMPASynapse ampa,NMDASynapse nmda,GABASynapse gaba)
 {
 ampa.gAMPAMax=50;nmda.gNMDAMax=50;gaba.gGABAaMax=100;gaba.gGABAbMax=4;
@@ -90,8 +86,7 @@ float calculateSynapticCurrent(float t, float Vm, AMPASynapse ampa,NMDASynapse n
         gbyg0 = 1- (1/(1+(kmg/nmda.mgC)));
         nmda.gNMDA = nmda.gNMDAMax* gbyg0 *  exp(-(t-5)/18)  * (1-exp(-(t-5)/13.2))/0.60;
         nmda.INMDA = nmda.gNMDA* (Vm - nmda.ENMDA) ; 
-        
-        
+                
         gaba.gGABAa = gaba.gGABAaMax * exp(-t/25) * (1 - exp(-t/1.0))/0.84;
         gaba.gGABAb = gaba.gGABAbMax * 0.84 * (exp(-t/283) + 0.16 * exp(-t/10226))* (pow((1-exp(-t/112)),4)/0.31);
         gaba.IGABAa = gaba.gGABAa* (Vm -gaba.EGABAa) ;
@@ -120,52 +115,10 @@ void setAdex(AdexPtr ad)
         ad->Vm=-70;       
         ad->w=0; 
         ad->Vreset = -30;        
-    }   
-void setAdexAsGranule(AdexPtr ad)
-{
- 
-        ad->Iin = 0;    
-      //Parameters  for MF input                As per Chaitanya's paper
-			        ad->Cm= 150;
-					ad->Gl=10;
-					ad->El= -70;
-					ad->delta =4;
-					ad->Vt = -50;
-			      //  Bifurcation parameters
-					ad->a= 9;
-					ad->Tw = 13;
-					ad->b = 250;
-					ad->Vr= -64;
-					ad->Vm=ad->El;
-					ad->w=0;
-                                         ad->spikes=0;
-                                          ad->Vreset = -43;    
-}
-void setAdexAsGolgi(AdexPtr ad)
-{
- 
-        ad->Iin = 0;    
-      //parameters for MF input:  As per Chaitanya's paper
-	   		ad->Cm= 350;
-	   		ad->Gl=12;
-	   		ad->El= -58;
-	   		ad->delta =7;
-	   		ad->Vt = -60;
-	   	//  Bifurcation parameters
-	   		ad->a= 12;
-	   		ad->Tw = 7;
-	   		ad->b = 1460;
-	   		ad->Vr= -50;
-	   		ad->Vm=ad->El;
-	   		ad->w=0;
-                         ad->spikes=0;
-                          ad->Vreset = 0;    
-}
-
+    } 
+/*Set the simulation parameters*/
 void setExperiment(ExPtr ex)
 {
- 
-  
  printf("\tREADING THE EXPERIMENT PARAMETERS\n");
  printf("Enter start time of simulation(ms): ");
  scanf("%lf",&ex->startTime);
@@ -190,7 +143,7 @@ double DeltaW(double t, double v, double w, AdexPtr ad)
       result=  ((ad->a*(v-ad->El)-w)/ad->Tw);
 return result;
 }
-void RengekuttaSolver_AdExLif(double t, AdexPtr ad, ExPtr ex)
+void RungekuttaSolver_AdExLif(double t, AdexPtr ad, ExPtr ex)
     {
         //t is not used in the equations
 
@@ -303,15 +256,13 @@ void Stimulate(AdexPtr ad,ExPtr ex,float* HInputSpikeTime, int no1, int no2)
      }
      else
      { 
-             
-    // ISyn = calculateInvitroSynapticCurrent(t,ad->Vm,ampa,gaba,no1,no2);
-     ISyn = calculateSynapticCurrent(t,ad->Vm,ampa,nmda,gaba,no1,no2);  
+      
+      ISyn = calculateSynapticCurrent(t,ad->Vm,ampa,nmda,gaba,no1,no2);  
       ad->Iin =-ISyn; 
               IArray[i] = ad->Iin;  
               GArray[i]= ampa.gAMPA;   
-          RengekuttaSolver_AdExLif(elapsed,ad,ex);  //elapsed is not used actually
+          RungekuttaSolver_AdExLif(elapsed,ad,ex);  //elapsed is not used actually
             if(ad->Vm >  ad->Vreset )
-           // if(ad->Vm > 0)  for golgi cells
             {
                 ad->VmArray[i] = 30 ;    // set the peak of spike value to some voltage
                 ad->Vm=ad->Vr;    //voltage is reset
@@ -326,14 +277,12 @@ void Stimulate(AdexPtr ad,ExPtr ex,float* HInputSpikeTime, int no1, int no2)
            TimeArray[i] = elapsed;
             ad->wArray[i] = ad->w;             
                  
-       
-elapsed += ex->dt; 
+   elapsed += ex->dt; 
   }
 StoreData(ad->VmArray,TimeArray,ad->wArray,IArray,ex->size); //keep the arrays in CSV files
  }
 int SpikeGenerator(float dt,float start, float duration,float ISI,float IBI,int SPB)  //in milli seconds
 { 
-
  float burstDuration = ISI*SPB;
  int noOfBursts = ceil(duration / (burstDuration + IBI));
  float spikeTime[30];

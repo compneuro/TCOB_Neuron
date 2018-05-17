@@ -1,9 +1,13 @@
-#include "NeuronAndSynapse.h"
+/* Adex Model  with synapse:in C
+author: Manjusha Nair @Amrita Vishwa Vidyapeetham
+
+*/
+#include "AdexWithSynapse.h"
 
 int main()
 {
  
-struct timeval t_start,t_end;
+struct timeval t_start,t_end;           //to calculate execution time
 float ISI,IBI;
 int SPB;  
 
@@ -21,20 +25,16 @@ printf("Enter the no of Inh synapses: ");
  scanf("%d",&no2);
 int length = SpikeGenerator(ex->dt,ex->startTime,ex->endTime,ISI,IBI,SPB);
 StoreInput(HInputSpikeTime,length);
-//setAdex(ad);
- setAdexAsGranule(ad);
- //setAdexAsGolgi(ad);
-clock_t start = clock();
-gettimeofday(&t_start,0);
+setAdex(ad);
+ gettimeofday(&t_start,0);
 Stimulate(ad,ex,HInputSpikeTime,no1,no2);
 printf("No of Spikes %d\n",ad->spikes);
 gettimeofday(&t_end,0);
-printf("Time elapsed (using clock function): %f\n", ((double)clock() - start) / CLOCKS_PER_SEC);
  float time_d = (t_end.tv_sec-t_start.tv_sec) *1000000 + t_end.tv_usec - t_start.tv_usec;
   printf(" Time elapsed (CPU):%f ms\n",time_d* 1E-3);
 }
 /* Compilation instructions
-#gcc adexsmain.c -lm
+#gcc AdexWithSynapsemain.c -lm
 To execute it,
-#./a.out
+./a.out
 */
